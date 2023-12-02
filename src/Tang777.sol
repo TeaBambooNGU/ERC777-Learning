@@ -34,7 +34,7 @@ contract Tang777 is ERC777,Ownable {
 
 
 
-    // ERC1120 接收者受到代币 ERC1120会回调此接口
+    // ERC770 接收者受到代币 ERC1120会回调此接口
     function tokensReceived(
         address operator,
         address from,
@@ -46,6 +46,7 @@ contract Tang777 is ERC777,Ownable {
         emit RecveiveTokens(from, amount);
     }
 
+    // ERC770 发送代币 ERC1120会回调此接口
     function tokensToSend(
         address operator,
         address from,
