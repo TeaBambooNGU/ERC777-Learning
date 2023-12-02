@@ -28,6 +28,8 @@ abstract contract ERC777 is Context, IERC777, IERC20 {
     // 默认操作者列表 不用于读取
     address[] private _defaultOperatorsArray;
     // 用于索引默认操作者状态 不可变 可以被标记撤销(tracked in __revokedDefaultOperators).
+    // 默认操作员是被所有持有人授权的操作员，这可以为项目方管理代币带来方便，
+    // 当然认何持有人仍然有权撤销默认操作员。
     mapping (address => bool) private _defaultOperators;
 
     // For each account, a mapping of its operators and revoked default operators.
@@ -407,11 +409,82 @@ abstract contract ERC777 is Context, IERC777, IERC20 {
 
         _move(spender, holder, recipient, amount, "", "");
 
+        uint256 currentAllowance = _allowances[holder][spender];
+        require(currentAllowance >= amount, "ERC777: transfer amount exceeds allowance");
+        _approve(holder, spender, currentAllowance - amount);
+
         _callTokensReceived(spender, holder, recipient, amount, "", "", false);
 
         return true; 
     }
 
+
+    /**
+     * @dev Creates `amount` tokens and assigns them to `account`, increasing
+     * the total supply.
+     *
+     * If a send hook is registered for `account`, the corresponding function
+     * will be called with `operator`, `data` and `operatorData`.
+     *
+     * See {IERC777Sender} and {IERC777Recipient}.
+     *
+     * Emits {Minted} and {IERC20-Transfer} events.
+     *
+     * Requirements
+     *
+     * - `account` cannot be the zero address.
+     * - if `account` is a contract, it must implement the {IERC777Recipient}
+     * interface.
+     */
+    function _mint(
+        address account,
+        uint256 amount,
+        bytes memory userData,
+        bytes memory operatorData
+    ) internal virtual {
+        _mint(account, amount, userData, operatorData, true);
+    }
+
+    /**
+     * @dev Creates `amount` tokens and assigns them to `account`, increasing
+     * the total supply.
+     *
+     * If `requireReceptionAck` is set to true, and if a send hook is
+     * registered for `account`, the corresponding function will be called with
+     * `operator`, `data` and `operatorData`.
+     *
+     * See {IERC777Sender} and {IERC777Recipient}.
+     *
+     * Emits {Minted} and {IERC20-Transfer} events.
+     *
+     * Requirements
+     *
+     * - `account` cannot be the zero address.
+     * - if `account` is a contract, it must implement the {IERC777Recipient}
+     * interface.
+     */
+    function _mint(
+        address account,
+        uint256 amount,
+        bytes memory userData,
+        bytes memory operatorData,
+        bool requireReceptionAck
+    ) internal virtual {
+        require(account != address(0), "ERC777: mint to the zero address");
+
+        address operator = _msgSender();
+
+        _beforeTokenTransfer(operator, address(0), account, amount);
+
+        // Update state variables
+        _totalSupply += amount;
+        _balances[account] += amount;
+
+        _callTokensReceived(operator, address(0), account, amount, userData, operatorData, requireReceptionAck);
+
+        emit Minted(operator, account, amount, userData, operatorData);
+        emit Transfer(address(0), account, amount);
+    }
 
 }
         
