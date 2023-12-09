@@ -75,6 +75,11 @@ contract Tang777 is ERC777,Ownable {
         interfaceForAccounts[account][interfaceHash] = true;
     }
 
+    function mint(address account,uint256 amount, bytes calldata userData) external onlyOwner  {
+        bytes memory operatorData = abi.encodePacked("operatorData",address(this));
+        _mint(account,amount,userData,operatorData);
+    }
+
     
 
 }
