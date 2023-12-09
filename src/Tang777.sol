@@ -22,7 +22,8 @@ contract Tang777 is ERC777,Ownable {
         string memory name_, 
         string memory symbol_, 
         address[] memory defaultOperators
-    )ERC777(name_, symbol_, defaultOperators) Ownable(msg.sender){
+    )ERC777(name_, symbol_, defaultOperators) Ownable(msg.sender){ 
+    
         uint initialSupply = 710 * 10 ** 18;
         _mint(msg.sender,initialSupply,"","");
 
